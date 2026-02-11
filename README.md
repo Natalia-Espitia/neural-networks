@@ -49,12 +49,43 @@ En el notebook se realiza una EDA minima:
 
 Se entrenan dos CNN identicas en todo excepto el kernel.
 
-## Resultados (completar al ejecutar)
+## Resultados
 | Modelo | Accuracy Test | Observaciones |
 |---|---|---|
 | Baseline | 0.62 |  Bajo rendimiento, pierde estructura espacial |
 | CNN 3x3 | 0.69 | Mejor generalizacion; kernels pequenos capturan patrones locales |
 | CNN 5x5 | 0.59 | Peor que 3x3; mas parametros, posible sobreajuste |
 
+## Interpretacion y razonamiento arquitectonico
+- La CNN supero al baseline porque conserva estructura espacial, reutiliza filtros (comparticion de pesos) y reduce parametros efectivos frente a `Flatten + Dense`.
+- El baseline pierde relaciones locales al aplanar la imagen, por eso generaliza peor en clasificacion visual.
+- El sesgo inductivo de convolucion es localidad + equivarianza a traslacion: asume que patrones utiles (bordes, texturas) pueden aparecer en distintas posiciones.
+- Con pooling se agrega cierta invariancia a pequeñas traslaciones y ruido local.
+- Convolucion no es ideal en datos tabulares sin estructura espacial o en problemas donde la relacion entre variables no es local en una grilla.
+
+## Arquitectura (diagrama simple)
+Baseline:
+- `Input(64,64,3) -> Flatten -> Dense(128, relu) -> Dense(2, softmax)`
+
+CNN 3x3:
+- `Input(64,64,3) -> Conv(32,3x3) -> MaxPool -> Conv(64,3x3) -> MaxPool -> Conv(128,3x3) -> MaxPool -> Flatten -> Dense(128,relu) -> Dense(2,softmax)`
+
+CNN 5x5:
+- Igual que la CNN 3x3, cambiando kernels `3x3` por `5x5`.
+
+## Como ejecutar
+Asegurate de que el dataset este en `archive/` con estructura de carpetas por clase.
+Abre `cats_dogs_cnn_lab.ipynb`.
+Ejecuta todas las celdas de arriba hacia abajo.
+
+## SageMaker (entrenamiento y despliegue)
+Pasos realizados:
+1. Subir dataset a S3 con estructura `archive/cats_set` y `archive/dogs_set`.
+2. Lanzar entrenamiento con `TensorFlow Estimator` usando `entry_point='train.py'`.
+3. Empaquetar/usar artefactos del modelo y desplegar endpoint.
+4. Ejecutar una inferencia de prueba contra el endpoint.
+
 ## Archivos
 - Notebook principal: `cats_dogs_cnn_lab.ipynb`
+- Script de entrenamiento: `train.py`
+- Artefactos de inferencia: `model/`
